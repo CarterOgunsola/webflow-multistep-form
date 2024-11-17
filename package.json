@@ -1,0 +1,24 @@
+{
+  "name": "webflow-multistep-form",
+  "version": "1.0.0",
+  "description": "Professional multi-step form enhancement tool for Webflow",
+  "main": "dist/webflow-multistep-form.umd.js",
+  "module": "dist/webflow-multistep-form.esm.js",
+  "unpkg": "dist/webflow-multistep-form.min.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rimraf dist",
+    "build:prod": "npm run clean && npm run build",
+    "release": "npm run build:prod && npm publish"
+  },
+  "keywords": [
+    "webflow",
+    "form",
+    "multistep",
+    "javascript"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

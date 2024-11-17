@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-Step Form Test Page</title>
+    <style>
+      /* Basic styling for testing */
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      .test-section {
+        margin-bottom: 40px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+
+      /* Form styling */
+      [data-form-step] {
+        display: none;
+        padding: 20px;
+        border: 1px solid #eee;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+
+      [data-form-step-active] {
+        display: block !important;
+        background: #f8f9fa;
+      }
+
+      .form-field {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      [data-invalid] {
+        border-color: #dc3545;
+      }
+
+      .form-error-message {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+      }
+
+      .form-save-indicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      /* Navigation styling */
+      .form-nav {
+        margin-top: 20px;
+      }
+
+      button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+
+      [data-form-navigation="next"] {
+        background: #007bff;
+        color: white;
+      }
+
+      [data-form-navigation="prev"] {
+        background: #6c757d;
+        color: white;
+      }
+
+      [data-navigation-disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Test controls */
+      .test-controls {
+        margin-bottom: 20px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
+
+      .test-controls button {
+        background: #6610f2;
+        color: white;
+        margin: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Multi-Step Form Test Page</h1>
+    <p>This page tests all features of the multi-step form library.</p>
+
+    <!-- Test Controls -->
+    <div class="test-controls">
+      <h3>Test Controls</h3>
+      <button onclick="clearStorage()">Clear Saved Progress</button>
+      <button onclick="addQueryParams()">Add Test Query Params</button>
+      <button onclick="resetForms()">Reset All Forms</button>
+    </div>
+
+    <!-- Basic Form Test -->
+    <div class="test-section">
+      <h2>Basic Form Test</h2>
+      <p>
+        Tests core functionality: step navigation, validation, and form memory.
+      </p>
+
+      <form data-multi-step-form id="basicForm">
+        <!-- Step 1 -->
+        <div data-form-step>
+          <h3>Step 1: Personal Info</h3>
+          <div class="form-field">
+            <label>Name:</label>
+            <input
+              type="text"
+              name="name"
+              data-validate="required minLength:2"
+              data-error-message="Name must be at least 2 characters"
+            />
+          </div>
+          <div class="form-field">
+            <label>Email:</label>
+            <input type="email" name="email" data-validate="required email" />
+          </div>
+          <div class="form-nav">
+            <button data-form-navigation="next">Next Step</button>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div data-form-step>
+          <h3>Step 2: Additional Details</h3>
+          <div class="form-field">
+            <label>Phone:</label>
+            <input type="tel" name="phone" data-validate="phone" />
+          </div>
+          <div class="form-field">
+            <label>Message:</label>
+            <textarea
+              name="message"
+              data-validate="required"
+              rows="4"
+            ></textarea>
+          </div>
+          <div class="form-nav">
+            <button data-form-navigation="prev">Previous</button>
+            <button type="submit">Submit</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Advanced Form Test -->
+    <div class="test-section">
+      <h2>Advanced Form Test</h2>
+      <p>
+        Tests query parameters, keyboard navigation, and complex validation.
+      </p>
+
+      <form
+        data-multi-step-form
+        data-form-prefill
+        data-keyboard-nav="true"
+        id="advancedForm"
+      >
+        <!-- Step 1 -->
+        <div data-form-step>
+          <h3>Step 1: Account</h3>
+          <div class="form-field">
+            <label>Username:</label>
+            <input
+              type="text"
+              name="username"
+              data-param="username"
+              data-validate="required minLength:3"
+            />
+          </div>
+          <div class="form-field">
+            <label>Email:</label>
+            <input
+              type="email"
+              name="email"
+              data-param="email"
+              data-validate="required email"
+            />
+          </div>
+          <div class="form-nav">
+            <button data-form-navigation="next">Next Step</button>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div data-form-step>
+          <h3>Step 2: Profile</h3>
+          <div class="form-field">
+            <label>Full Name:</label>
+            <input
+              type="text"
+              name="fullName"
+              data-param="name"
+              data-validate="required"
+            />
+          </div>
+          <div class="form-field">
+            <label>Bio:</label>
+            <textarea
+              name="bio"
+              data-param="bio"
+              data-validate="maxLength:200"
+              rows="4"
+            ></textarea>
+          </div>
+          <div class="form-nav">
+            <button data-form-navigation="prev">Previous</button>
+            <button data-form-navigation="next">Next Step</button>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div data-form-step>
+          <h3>Step 3: Preferences</h3>
+          <div class="form-field">
+            <label>
+              <input
+                type="checkbox"
+                name="newsletter"
+                data-param="newsletter"
+              />
+              Subscribe to newsletter
+            </label>
+          </div>
+          <div class="form-field">
+            <label>Preferred Contact Method:</label>
+            <select
+              name="contactPref"
+              data-param="contact"
+              data-validate="required"
+            >
+              <option value="">Choose...</option>
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+            </select>
+          </div>
+          <div class="form-nav">
+            <button data-form-navigation="prev">Previous</button>
+            <button type="submit">Complete</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Test Helpers -->
+    <script>
+      function clearStorage() {
+        localStorage.clear();
+        console.log("Local storage cleared");
+      }
+
+      function addQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+        params.set("username", "testuser");
+        params.set("email", "test@example.com");
+        params.set("name", "Test User");
+        params.set("step", "2");
+        window.location.search = params.toString();
+      }
+
+      function resetForms() {
+        document.querySelectorAll("form").forEach((form) => {
+          form.reset();
+          if (form._multiStepForm) {
+            form._multiStepForm.resetForm();
+          }
+        });
+      }
+
+      // Log events for testing
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll("form").forEach((form) => {
+          form.addEventListener("stepChange", (e) => {
+            console.log("Step changed:", e.detail);
+          });
+
+          form.addEventListener("formProgressSaved", () => {
+            console.log("Progress saved");
+          });
+
+          form.addEventListener("formValid", () => {
+            console.log("Form is valid and ready to submit");
+          });
+
+          form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            console.log(
+              "Form submitted:",
+              Object.fromEntries(new FormData(e.target))
+            );
+          });
+        });
+      });
+    </script>
+
+    <!-- Load your script -->
+    <script type="module">
+      import MultiStepFormInitializer from "/src/core/index.js";
+    </script>
+  </body>
+</html>
