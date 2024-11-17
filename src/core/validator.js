@@ -4,48 +4,210 @@ class Validator {
     this.form = form;
     this.validationRules = new Map();
     this.customValidators = new Map();
+    this.locale = document.documentElement.lang || "en";
+    this.messages = {
+      required: "This field is required",
+      email: "Please check your email address",
+      phone: "Please check your phone number",
+      minLength: (length) => `Minimum ${length} characters`,
+      maxLength: (length) => `Maximum ${length} characters`,
+      pattern: "Please check the format",
+      number: "Please enter a valid number",
+      date: "Please enter a valid date",
+      fileSize: "File is too large",
+      fileType: "File type not allowed",
+    };
 
     // Setup default validators
     this.setupDefaultValidators();
   }
 
   setupDefaultValidators() {
+    // Required field - accepts any non-whitespace including Unicode
     this.customValidators.set("required", (value) => ({
-      valid: value.trim().length > 0,
-      message: "This field is required",
+      valid: String(value).trim().length > 0,
+      message: this.messages.required,
     }));
 
+    // Email - Unicode support + TLD optional
     this.customValidators.set("email", (value) => ({
-      valid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
-      message: "Please enter a valid email address",
+      valid: value.length === 0 || this.validateEmail(value),
+      message: this.messages.email,
     }));
 
+    // Phone - International format support
     this.customValidators.set("phone", (value) => ({
-      valid: /^[\d\s\-+()]{7,}$/.test(value),
-      message: "Please enter a valid phone number",
+      valid: value.length === 0 || this.validatePhone(value),
+      message: this.messages.phone,
     }));
 
+    // Length validation with Unicode support
     this.customValidators.set("minLength", (value, length) => ({
-      valid: value.length >= length,
-      message: `Must be at least ${length} characters`,
+      valid: [...String(value)].length >= Number(length),
+      message: this.messages.minLength(length),
     }));
 
     this.customValidators.set("maxLength", (value, length) => ({
-      valid: value.length <= length,
-      message: `Must be no more than ${length} characters`,
+      valid: [...String(value)].length <= Number(length),
+      message: this.messages.maxLength(length),
     }));
 
-    this.customValidators.set("pattern", (value, pattern) => ({
-      valid: new RegExp(pattern).test(value),
-      message: "Please match the requested format",
-    }));
+    // Number validation with localization
+    this.customValidators.set("number", (value, params = "") => {
+      if (value.length === 0) return { valid: true };
+
+      // Handle different number formats
+      const [min, max] = params
+        .split(",")
+        .map((p) => (p ? parseFloat(p) : null));
+      const normalizedValue = this.normalizeNumber(value);
+
+      if (isNaN(normalizedValue)) {
+        return { valid: false, message: this.messages.number };
+      }
+
+      if (min !== null && normalizedValue < min) {
+        return { valid: false, message: `Value must be at least ${min}` };
+      }
+
+      if (max !== null && normalizedValue > max) {
+        return { valid: false, message: `Value must be no more than ${max}` };
+      }
+
+      return { valid: true };
+    });
+
+    // Date validation with flexible formats
+    this.customValidators.set("date", (value, format = "") => {
+      if (value.length === 0) return { valid: true };
+      return {
+        valid: this.validateDate(value, format),
+        message: this.messages.date,
+      };
+    });
+
+    // File validation
+    this.customValidators.set("file", (value, params = "") => {
+      if (!value || !value.length) return { valid: true };
+
+      const [maxSize, allowedTypes] = params.split(",");
+      const file = value[0];
+
+      if (maxSize && file.size > maxSize * 1024 * 1024) {
+        return { valid: false, message: this.messages.fileSize };
+      }
+
+      if (allowedTypes && !allowedTypes.split("|").includes(file.type)) {
+        return { valid: false, message: this.messages.fileType };
+      }
+
+      return { valid: true };
+    });
+
+    // Flexible pattern matching with flags
+    this.customValidators.set("pattern", (value, patternString) => {
+      if (value.length === 0) return { valid: true };
+      try {
+        const [pattern, flags = ""] = patternString.split("|");
+        return {
+          valid: new RegExp(pattern, flags).test(value),
+          message: this.messages.pattern,
+        };
+      } catch (e) {
+        console.warn("Invalid regex pattern:", e);
+        return { valid: true };
+      }
+    });
   }
 
-  init() {
-    // Set up validation from data attributes
-    this.setupFieldValidations();
+  validateEmail(email) {
+    // Basic structure check
+    if (!/^[^@\s]+@[^@\s]+/.test(email)) return false;
 
-    // Add real-time validation listeners
+    try {
+      // Split into local and domain parts
+      const [local, domain] = email.split("@");
+
+      // Local part checks
+      if (local.length > 64) return false;
+
+      // Domain checks (more permissive)
+      const domainParts = domain.split(".");
+      return domainParts.every((part) => part.length > 0 && part.length <= 63);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  validatePhone(phone) {
+    // Remove all formatting characters
+    const stripped = phone.replace(/[\s\-.()\u2000-\u206F\u2E00-\u2E7F]/g, "");
+
+    // Allow for various international formats
+    // Minimum 5 digits (some old phone numbers)
+    // Maximum 15 digits (ITU-T recommendation)
+    // Optional + at start
+    return /^\+?\d{5,15}$/.test(stripped);
+  }
+
+  validateDate(value, format) {
+    if (!value) return false;
+
+    // Try parsing as ISO date first
+    let date = new Date(value);
+    if (!isNaN(date.getTime())) return true;
+
+    // If format is specified, try parsing with format
+    if (format) {
+      try {
+        // Simple format parsing (can be expanded)
+        const formatParts = format.split(/[-/]/);
+        const valueParts = value.split(/[-/]/);
+
+        if (formatParts.length !== valueParts.length) return false;
+
+        const dateObj = {};
+        formatParts.forEach((part, i) => {
+          dateObj[part.toLowerCase()] = parseInt(valueParts[i], 10);
+        });
+
+        date = new Date(
+          dateObj.yyyy || dateObj.yy + 2000,
+          (dateObj.mm || 1) - 1,
+          dateObj.dd || 1
+        );
+
+        return !isNaN(date.getTime());
+      } catch (e) {
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  normalizeNumber(value) {
+    // Handle different number formats (1,234.56 or 1.234,56)
+    const cleaned = value.replace(/[^\d,.-]/g, "");
+
+    // Detect format based on position of . and ,
+    const lastDot = cleaned.lastIndexOf(".");
+    const lastComma = cleaned.lastIndexOf(",");
+
+    if (lastDot > lastComma) {
+      // 1,234.56 format
+      return parseFloat(cleaned.replace(/,/g, ""));
+    } else if (lastComma > lastDot) {
+      // 1.234,56 format
+      return parseFloat(cleaned.replace(/\./g, "").replace(",", "."));
+    }
+
+    return parseFloat(cleaned);
+  }
+
+  // Rest of the class implementation remains the same...
+  init() {
+    this.setupFieldValidations();
     this.setupValidationListeners();
   }
 
@@ -63,7 +225,6 @@ class Validator {
       if (this.validationRules.has(field)) {
         field.addEventListener("blur", () => this.validateField(field));
         field.addEventListener("input", () => {
-          // Remove error states while typing
           this.clearError(field);
         });
       }
@@ -80,7 +241,6 @@ class Validator {
     for (const ruleString of rules) {
       let ruleName, ruleValue;
 
-      // Check if rule has a value (e.g., minLength:3)
       if (ruleString.includes(":")) {
         [ruleName, ruleValue] = ruleString.split(":");
       } else {
@@ -89,7 +249,8 @@ class Validator {
 
       const validator = this.customValidators.get(ruleName);
       if (validator) {
-        const result = validator(field.value, ruleValue);
+        const value = field.type === "file" ? field.files : field.value;
+        const result = validator(value, ruleValue);
         if (!result.valid) {
           isValid = false;
           errorMessage =
@@ -137,14 +298,14 @@ class Validator {
   }
 
   showError(field, message) {
-    // Add error state to field
     field.setAttribute("data-invalid", "");
+    field.setAttribute("aria-invalid", "true");
 
-    // Create or update error message
     let errorElement = field.parentElement.querySelector(".form-error-message");
     if (!errorElement) {
       errorElement = document.createElement("div");
       errorElement.className = "form-error-message";
+      errorElement.setAttribute("role", "alert");
       field.parentElement.appendChild(errorElement);
     }
     errorElement.textContent = message;
@@ -152,6 +313,7 @@ class Validator {
 
   clearError(field) {
     field.removeAttribute("data-invalid");
+    field.removeAttribute("aria-invalid");
     const errorElement = field.parentElement.querySelector(
       ".form-error-message"
     );
@@ -166,7 +328,14 @@ class Validator {
     });
   }
 
-  // Add custom validator
+  setMessages(messages) {
+    this.messages = { ...this.messages, ...messages };
+  }
+
+  setLocale(locale) {
+    this.locale = locale;
+  }
+
   addValidator(name, validatorFn) {
     this.customValidators.set(name, validatorFn);
   }

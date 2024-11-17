@@ -1,8 +1,8 @@
 // src/core/WebflowMultiStepForm.js
-import StepManager from "./StepManager.js";
-import FormMemory from "./FormMemory.js";
+import StepManager from "./stepManager.js";
+import FormMemory from "./formMemory.js";
 import QueryParams from "./QueryParams.js";
-import Validator from "./Validator.js";
+import Validator from "./validator.js";
 
 class WebflowMultiStepForm {
   constructor(formElement) {

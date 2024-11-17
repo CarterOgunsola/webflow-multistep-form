@@ -2,11 +2,25 @@
 
 A professional, lightweight multi-step form enhancement tool specifically designed for Webflow projects. Transform your single-page forms into intuitive, step-by-step experiences with built-in validation, progress saving, and smooth transitions.
 
+## Features
+
+- 🚀 **Easy Integration** - Simple drop-in solution for Webflow
+- 📱 **Fully Responsive** - Works seamlessly on all devices
+- 🌍 **International Support** - Unicode and locale-aware validation
+- ✨ **Progressive Enhancement** - Enhances existing Webflow forms
+- 💾 **Form Memory** - Automatically saves progress
+- ✅ **Comprehensive Validation** - Smart, flexible field validation
+- 🎯 **Query Parameter Support** - Pre-fill forms via URL parameters
+- 🔄 **Step Navigation** - Intuitive next/previous navigation
+- 📋 **Progress Tracking** - Visual progress indicators
+- ⌨️ **Keyboard Navigation** - Enhanced accessibility
+- 🌐 **Localization Ready** - Customizable messages and formats
+
 ## Installation
 
 ### CDN Installation
 
-You can include this library directly in your Webflow project using our CDN. Choose the version that best suits your needs:
+Include this library directly in your Webflow project using our CDN:
 
 #### Latest Version (Always up-to-date)
 
@@ -26,33 +40,15 @@ You can include this library directly in your Webflow project using our CDN. Cho
 - `@v1.0.2` - Locks to a specific version (most stable)
 - `@v1` - Gets the latest 1.x.x version (balance of stability and updates)
 
-### Version History
-
-- v1.0.2 - Added comprehensive documentation
-- v1.0.1 - Initial distribution files
-- v1.0.0 - Initial release
-
-## Features
-
-- 🚀 **Easy Integration** - Simple drop-in solution for Webflow
-- 📱 **Fully Responsive** - Works seamlessly on all devices
-- ✨ **Progressive Enhancement** - Enhances existing Webflow forms
-- 💾 **Form Memory** - Automatically saves progress
-- ✅ **Built-in Validation** - Comprehensive field validation
-- 🎯 **Query Parameter Support** - Pre-fill forms via URL parameters
-- 🔄 **Step Navigation** - Intuitive next/previous navigation
-- 📋 **Progress Tracking** - Visual progress indicators
-- ⌨️ **Keyboard Navigation** - Enhanced accessibility
-
 ## Quick Start
 
-Add this script to your Webflow project settings under "Custom Code" (before `</body>` tag):
+Add to your Webflow project settings under "Custom Code" (before `</body>` tag):
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@latest/dist/multistep-form.min.js"></script>
 ```
 
-Then, structure your form like this:
+Basic form structure:
 
 ```html
 <form data-multi-step-form>
@@ -71,12 +67,10 @@ Then, structure your form like this:
 </form>
 ```
 
-## Detailed Example
-
-Here's a complete form example with all features:
+## Comprehensive Form Example
 
 ```html
-<form data-multi-step-form data-form-memory="true">
+<form data-multi-step-form data-form-memory="true" data-keyboard-nav="true">
   <!-- Progress Indicator -->
   <div class="form-progress">
     <div class="progress-step" data-step="0"></div>
@@ -84,127 +78,212 @@ Here's a complete form example with all features:
     <div class="progress-step" data-step="2"></div>
   </div>
 
-  <!-- Step 1: Personal Info -->
+  <!-- Step 1: Personal Details -->
   <div data-form-step>
-    <input
-      type="text"
-      name="fullName"
-      data-validate="required minLength:2"
-      data-error-message="Please enter your full name"
-      placeholder="Full Name"
-    />
+    <div class="form-field">
+      <label>Full Name</label>
+      <input
+        type="text"
+        name="fullName"
+        data-validate="required pattern:^[\p{L}\s]+$|u"
+        data-error-message="Please enter your full name"
+        placeholder="John Doe"
+      />
+    </div>
+
+    <div class="form-field">
+      <label>Phone Number</label>
+      <input
+        type="tel"
+        name="phone"
+        data-validate="phone"
+        placeholder="+1 (234) 567-8900"
+      />
+    </div>
+
     <button data-form-navigation="next">Continue</button>
   </div>
 
-  <!-- Step 2: Contact -->
+  <!-- Step 2: Contact & Preferences -->
   <div data-form-step>
-    <input
-      type="email"
-      name="email"
-      data-validate="required email"
-      data-param="email"
-      placeholder="Email"
-    />
+    <div class="form-field">
+      <label>Email Address</label>
+      <input
+        type="email"
+        name="email"
+        data-validate="required email"
+        data-param="email"
+        placeholder="your@email.com"
+      />
+    </div>
+
+    <div class="form-field">
+      <label>Birth Date</label>
+      <input
+        type="text"
+        name="birthDate"
+        data-validate="date:DD/MM/YYYY"
+        placeholder="31/12/1990"
+      />
+    </div>
+
     <button data-form-navigation="prev">Back</button>
     <button data-form-navigation="next">Continue</button>
   </div>
 
-  <!-- Step 3: Additional Info -->
+  <!-- Step 3: File Upload & Submission -->
   <div data-form-step>
-    <textarea
-      name="message"
-      data-validate="required"
-      placeholder="Your message"
-    ></textarea>
+    <div class="form-field">
+      <label>Profile Picture</label>
+      <input
+        type="file"
+        name="profile"
+        data-validate="file:5,image/jpeg|image/png"
+      />
+    </div>
+
+    <div class="form-field">
+      <label>Additional Comments</label>
+      <textarea
+        name="comments"
+        data-validate="maxLength:500"
+        placeholder="Your message here..."
+      ></textarea>
+    </div>
+
     <button data-form-navigation="prev">Back</button>
     <button type="submit">Submit</button>
   </div>
 </form>
 ```
 
+## Validation Features
+
+### Available Validators
+
+- `required` - Field must not be empty (Unicode-aware)
+- `email` - Email validation with international support
+- `phone` - International phone number formats
+- `minLength:n` - Minimum length (Unicode-aware)
+- `maxLength:n` - Maximum length (Unicode-aware)
+- `number:min,max` - Number with optional range
+- `date:format` - Date with format specification
+- `file:size,types` - File size and type validation
+- `pattern:regex|flags` - Custom regex with flags
+
+### Validation Examples
+
+```html
+<!-- International email -->
+<input type="email" data-validate="email" placeholder="email@domain.com" />
+
+<!-- International phone -->
+<input type="tel" data-validate="phone" placeholder="+1 (234) 567-8900" />
+
+<!-- Number with regional format -->
+<input type="text" data-validate="number:0,1000" placeholder="1.234,56" />
+
+<!-- Date with format -->
+<input type="text" data-validate="date:DD/MM/YYYY" placeholder="31/12/2024" />
+
+<!-- File upload -->
+<input type="file" data-validate="file:5,image/jpeg|image/png" />
+
+<!-- Unicode text -->
+<input
+  type="text"
+  data-validate="pattern:^[\p{L}\s]+$|u"
+  placeholder="Names in any language"
+/>
+```
+
 ## Configuration Options
 
 ### Form Attributes
 
-- `data-multi-step-form` - Initializes multi-step functionality
+- `data-multi-step-form` - Activates functionality
 - `data-form-memory="false"` - Disables progress saving
 - `data-keyboard-nav="true"` - Enables keyboard navigation
-- `data-auto-scroll="false"` - Disables auto-scroll on step change
+- `data-auto-scroll="false"` - Disables auto-scroll
+- `data-form-prefill="true"` - Enables URL prefilling
 
-### Field Validation
+### Localization
 
-Available validators:
+```javascript
+const form = document.querySelector("[data-multi-step-form]");
+const validator = form._multiStepForm.validator;
 
-- `required` - Field must not be empty
-- `email` - Must be valid email format
-- `phone` - Must be valid phone number
-- `minLength:n` - Minimum length requirement
-- `maxLength:n` - Maximum length requirement
-- `pattern:regex` - Custom regex pattern
+// Custom messages
+validator.setMessages({
+  required: "Este campo es obligatorio",
+  email: "Por favor, introduce un email válido",
+  phone: "Por favor, introduce un número válido",
+});
 
-Example:
-
-```html
-<input
-  type="text"
-  data-validate="required minLength:3"
-  data-error-message="Custom error message"
-/>
+// Set locale
+validator.setLocale("es");
 ```
 
-### Query Parameters
+### Custom Validators
 
-Pre-fill fields using URL parameters:
-
-```html
-<input type="text" name="username" data-param="user" />
-<!-- Will be filled from: example.com?user=john -->
-```
-
-### Progress Saving
-
-Form progress is automatically saved unless disabled. To disable:
-
-```html
-<form data-multi-step-form data-form-memory="false"></form>
+```javascript
+validator.addValidator('customRule', (value, param) => ({
+  valid: /* your validation logic */,
+  message: "Custom error message"
+}));
 ```
 
 ## Events
 
-Listen for form events:
-
 ```javascript
 const form = document.querySelector("[data-multi-step-form]");
 
+// Step changes
 form.addEventListener("stepChange", (e) => {
-  console.log("Step changed:", e.detail);
+  console.log("Current step:", e.detail.currentStep);
+  console.log("Total steps:", e.detail.totalSteps);
 });
 
+// Progress saving
 form.addEventListener("formProgressSaved", () => {
   console.log("Progress saved");
 });
 
+// Validation success
 form.addEventListener("formValid", () => {
   console.log("Form is valid");
+});
+
+// Progress restored
+form.addEventListener("formProgressRestored", (e) => {
+  console.log("Progress restored from:", e.detail.timestamp);
 });
 ```
 
 ## Styling
 
-Add these styles to customize the appearance:
+Basic CSS for form states:
 
 ```css
-/* Hide inactive steps */
+/* Step visibility */
 [data-form-step] {
   display: none;
 }
 
-/* Show active step */
 [data-form-step-active] {
   display: block !important;
 }
 
-/* Error states */
+/* Progress indicators */
+[data-form-step-completed] .progress-step {
+  background-color: #4caf50;
+}
+
+[data-form-step-active] .progress-step {
+  background-color: #2196f3;
+}
+
+/* Validation states */
 [data-invalid] {
   border-color: #ff4b4b !important;
 }
@@ -214,6 +293,28 @@ Add these styles to customize the appearance:
   font-size: 14px;
   margin-top: 4px;
 }
+
+/* Navigation states */
+[data-navigation-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-navigation-final] {
+  background-color: #4caf50;
+}
+
+/* Save indicator */
+.form-save-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  transition: opacity 0.3s;
+}
 ```
 
 ## Browser Support
@@ -222,12 +323,18 @@ Add these styles to customize the appearance:
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
-- iOS Safari
-- Android Chrome
+- iOS Safari (latest)
+- Android Chrome (latest)
 
 ## Contributing
 
-Issues and pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+We welcome contributions! For major changes:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
@@ -239,4 +346,4 @@ For issues and feature requests, please [open an issue](https://github.com/Carte
 
 ---
 
-Built with ❤️ for the Webflow community
+Built with ❤️ for the Webflow community by Carter Ogunsola
