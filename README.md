@@ -2,6 +2,36 @@
 
 A professional, lightweight multi-step form enhancement tool specifically designed for Webflow projects. Transform your single-page forms into intuitive, step-by-step experiences with built-in validation, progress saving, and smooth transitions.
 
+## Installation
+
+### CDN Installation
+
+You can include this library directly in your Webflow project using our CDN. Choose the version that best suits your needs:
+
+#### Latest Version (Always up-to-date)
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@latest/dist/multistep-form.min.js"></script>
+```
+
+#### Specific Version (More stable)
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@v1.0.2/dist/multistep-form.min.js"></script>
+```
+
+### Version Information
+
+- `@latest` - Always gets the newest version (may include breaking changes)
+- `@v1.0.2` - Locks to a specific version (most stable)
+- `@v1` - Gets the latest 1.x.x version (balance of stability and updates)
+
+### Version History
+
+- v1.0.2 - Added comprehensive documentation
+- v1.0.1 - Initial distribution files
+- v1.0.0 - Initial release
+
 ## Features
 
 - 🚀 **Easy Integration** - Simple drop-in solution for Webflow
@@ -19,7 +49,7 @@ A professional, lightweight multi-step form enhancement tool specifically design
 Add this script to your Webflow project settings under "Custom Code" (before `</body>` tag):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@v1.0.1/dist/webflow-multistep-form.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@latest/dist/multistep-form.min.js"></script>
 ```
 
 Then, structure your form like this:
