@@ -4,7 +4,14 @@ class StepManager {
     this.steps = Array.from(this.form.querySelectorAll("[data-form-step]"));
     this.currentStepIndex = 0;
     this.totalSteps = this.steps.length;
+    this.progressIndicators = Array.from(
+      this.form.querySelectorAll('[data-form="progress-indicator"]')
+    );
+    this.customProgressIndicators = Array.from(
+      this.form.querySelectorAll('[data-form="custom-progress-indicator"]')
+    );
   }
+  // Getters for current state
   getCurrentStep() {
     return this.steps[this.currentStepIndex];
   }
@@ -14,26 +21,25 @@ class StepManager {
   getTotalSteps() {
     return this.totalSteps;
   }
+  // Navigate to a specific step
   goToStep(index) {
     if (index >= 0 && index < this.totalSteps) {
       this.currentStepIndex = index;
       this.updateStepStates();
+      this.updateProgressIndicators();
       return true;
     }
     return false;
   }
+  // Navigate forward
   next() {
     return this.goToStep(this.currentStepIndex + 1);
   }
+  // Navigate backward
   previous() {
     return this.goToStep(this.currentStepIndex - 1);
   }
-  hasNext() {
-    return this.currentStepIndex < this.totalSteps - 1;
-  }
-  hasPrevious() {
-    return this.currentStepIndex > 0;
-  }
+  // Update visual state of steps
   updateStepStates() {
     this.steps.forEach((step, index) => {
       step.removeAttribute("data-form-step-active");
@@ -50,8 +56,7 @@ class StepManager {
         step.style.display = "none";
       }
     });
-    this.form.setAttribute("data-form-step-index", this.currentStepIndex);
-    this.form.setAttribute("data-form-step-count", this.totalSteps);
+    this.updateProgressIndicators();
     this.form.dispatchEvent(
       new CustomEvent("stepChange", {
         detail: {
@@ -62,6 +67,32 @@ class StepManager {
         }
       })
     );
+  }
+  // Update progress indicators
+  updateProgressIndicators() {
+    this.progressIndicators.forEach((indicator, index) => {
+      indicator.classList.remove("current", "completed");
+      if (index < this.currentStepIndex) {
+        indicator.classList.add("completed");
+      } else if (index === this.currentStepIndex) {
+        indicator.classList.add("current");
+      }
+    });
+    this.customProgressIndicators.forEach((indicator, index) => {
+      indicator.classList.remove("current", "completed");
+      if (index < this.currentStepIndex) {
+        indicator.classList.add("completed");
+      } else if (index === this.currentStepIndex) {
+        indicator.classList.add("current");
+      }
+    });
+  }
+  // Determine navigation possibilities
+  hasNext() {
+    return this.currentStepIndex < this.totalSteps - 1;
+  }
+  hasPrevious() {
+    return this.currentStepIndex > 0;
   }
 }
 class FormMemory {
@@ -230,34 +261,142 @@ class Validator {
     this.form = form;
     this.validationRules = /* @__PURE__ */ new Map();
     this.customValidators = /* @__PURE__ */ new Map();
+    this.locale = document.documentElement.lang || "en";
+    this.messages = {
+      required: "This field is required",
+      email: "Please check your email address",
+      phone: "Please check your phone number",
+      minLength: (length) => `Minimum ${length} characters`,
+      maxLength: (length) => `Maximum ${length} characters`,
+      pattern: "Please check the format",
+      number: "Please enter a valid number",
+      date: "Please enter a valid date",
+      fileSize: "File is too large",
+      fileType: "File type not allowed"
+    };
     this.setupDefaultValidators();
   }
   setupDefaultValidators() {
     this.customValidators.set("required", (value) => ({
-      valid: value.trim().length > 0,
-      message: "This field is required"
+      valid: String(value).trim().length > 0,
+      message: this.messages.required
     }));
     this.customValidators.set("email", (value) => ({
-      valid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
-      message: "Please enter a valid email address"
+      valid: value.length === 0 || this.validateEmail(value),
+      message: this.messages.email
     }));
     this.customValidators.set("phone", (value) => ({
-      valid: /^[\d\s\-+()]{7,}$/.test(value),
-      message: "Please enter a valid phone number"
+      valid: value.length === 0 || this.validatePhone(value),
+      message: this.messages.phone
     }));
     this.customValidators.set("minLength", (value, length) => ({
-      valid: value.length >= length,
-      message: `Must be at least ${length} characters`
+      valid: [...String(value)].length >= Number(length),
+      message: this.messages.minLength(length)
     }));
     this.customValidators.set("maxLength", (value, length) => ({
-      valid: value.length <= length,
-      message: `Must be no more than ${length} characters`
+      valid: [...String(value)].length <= Number(length),
+      message: this.messages.maxLength(length)
     }));
-    this.customValidators.set("pattern", (value, pattern) => ({
-      valid: new RegExp(pattern).test(value),
-      message: "Please match the requested format"
-    }));
+    this.customValidators.set("number", (value, params = "") => {
+      if (value.length === 0) return { valid: true };
+      const [min, max] = params.split(",").map((p) => p ? parseFloat(p) : null);
+      const normalizedValue = this.normalizeNumber(value);
+      if (isNaN(normalizedValue)) {
+        return { valid: false, message: this.messages.number };
+      }
+      if (min !== null && normalizedValue < min) {
+        return { valid: false, message: `Value must be at least ${min}` };
+      }
+      if (max !== null && normalizedValue > max) {
+        return { valid: false, message: `Value must be no more than ${max}` };
+      }
+      return { valid: true };
+    });
+    this.customValidators.set("date", (value, format = "") => {
+      if (value.length === 0) return { valid: true };
+      return {
+        valid: this.validateDate(value, format),
+        message: this.messages.date
+      };
+    });
+    this.customValidators.set("file", (value, params = "") => {
+      if (!value || !value.length) return { valid: true };
+      const [maxSize, allowedTypes] = params.split(",");
+      const file = value[0];
+      if (maxSize && file.size > maxSize * 1024 * 1024) {
+        return { valid: false, message: this.messages.fileSize };
+      }
+      if (allowedTypes && !allowedTypes.split("|").includes(file.type)) {
+        return { valid: false, message: this.messages.fileType };
+      }
+      return { valid: true };
+    });
+    this.customValidators.set("pattern", (value, patternString) => {
+      if (value.length === 0) return { valid: true };
+      try {
+        const [pattern, flags = ""] = patternString.split("|");
+        return {
+          valid: new RegExp(pattern, flags).test(value),
+          message: this.messages.pattern
+        };
+      } catch (e) {
+        console.warn("Invalid regex pattern:", e);
+        return { valid: true };
+      }
+    });
   }
+  validateEmail(email) {
+    if (!/^[^@\s]+@[^@\s]+/.test(email)) return false;
+    try {
+      const [local, domain] = email.split("@");
+      if (local.length > 64) return false;
+      const domainParts = domain.split(".");
+      return domainParts.every((part) => part.length > 0 && part.length <= 63);
+    } catch (e) {
+      return false;
+    }
+  }
+  validatePhone(phone) {
+    const stripped = phone.replace(/[\s\-.()\u2000-\u206F\u2E00-\u2E7F]/g, "");
+    return /^\+?\d{5,15}$/.test(stripped);
+  }
+  validateDate(value, format) {
+    if (!value) return false;
+    let date = new Date(value);
+    if (!isNaN(date.getTime())) return true;
+    if (format) {
+      try {
+        const formatParts = format.split(/[-/]/);
+        const valueParts = value.split(/[-/]/);
+        if (formatParts.length !== valueParts.length) return false;
+        const dateObj = {};
+        formatParts.forEach((part, i) => {
+          dateObj[part.toLowerCase()] = parseInt(valueParts[i], 10);
+        });
+        date = new Date(
+          dateObj.yyyy || dateObj.yy + 2e3,
+          (dateObj.mm || 1) - 1,
+          dateObj.dd || 1
+        );
+        return !isNaN(date.getTime());
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  }
+  normalizeNumber(value) {
+    const cleaned = value.replace(/[^\d,.-]/g, "");
+    const lastDot = cleaned.lastIndexOf(".");
+    const lastComma = cleaned.lastIndexOf(",");
+    if (lastDot > lastComma) {
+      return parseFloat(cleaned.replace(/,/g, ""));
+    } else if (lastComma > lastDot) {
+      return parseFloat(cleaned.replace(/\./g, "").replace(",", "."));
+    }
+    return parseFloat(cleaned);
+  }
+  // Rest of the class implementation remains the same...
   init() {
     this.setupFieldValidations();
     this.setupValidationListeners();
@@ -293,7 +432,8 @@ class Validator {
       }
       const validator = this.customValidators.get(ruleName);
       if (validator) {
-        const result = validator(field.value, ruleValue);
+        const value = field.type === "file" ? field.files : field.value;
+        const result = validator(value, ruleValue);
         if (!result.valid) {
           isValid = false;
           errorMessage = field.getAttribute("data-error-message") || result.message;
@@ -332,16 +472,19 @@ class Validator {
   }
   showError(field, message) {
     field.setAttribute("data-invalid", "");
+    field.setAttribute("aria-invalid", "true");
     let errorElement = field.parentElement.querySelector(".form-error-message");
     if (!errorElement) {
       errorElement = document.createElement("div");
       errorElement.className = "form-error-message";
+      errorElement.setAttribute("role", "alert");
       field.parentElement.appendChild(errorElement);
     }
     errorElement.textContent = message;
   }
   clearError(field) {
     field.removeAttribute("data-invalid");
+    field.removeAttribute("aria-invalid");
     const errorElement = field.parentElement.querySelector(
       ".form-error-message"
     );
@@ -354,7 +497,12 @@ class Validator {
       this.clearError(field);
     });
   }
-  // Add custom validator
+  setMessages(messages) {
+    this.messages = { ...this.messages, ...messages };
+  }
+  setLocale(locale) {
+    this.locale = locale;
+  }
   addValidator(name, validatorFn) {
     this.customValidators.set(name, validatorFn);
   }
