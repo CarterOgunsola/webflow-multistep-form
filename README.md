@@ -11,13 +11,13 @@ You can include this library directly in your Webflow project using our CDN. Cho
 #### Latest Version (Always up-to-date)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@latest/dist/multistep-form.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@latest/dist/webflow-multistep-form.min.js"></script>
 ```
 
 #### Specific Version (More stable)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@v1.0.2/dist/multistep-form.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/CarterOgunsola/webflow-multistep-form@v1.0.2/dist/webflow-multistep-form.min.js"></script>
 ```
 
 ### Version Information
